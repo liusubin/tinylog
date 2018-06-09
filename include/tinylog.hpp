@@ -164,6 +164,10 @@ SOFTWARE.
 // 使用简体中文
 // #define TINYLOG_USE_SIMPLIFIED_CHINA 1
 
+#if defined(TINYLOG_USE_SINGLE_THREAD)
+#   define TINYLOG_NO_REGISTRY_MUTEX 1
+#endif
+
 #if defined(_WIN32) || defined(__CYGWIN__)
 #   define TINYLOG_WINDOWS_API
 #else
@@ -2097,7 +2101,7 @@ private:
 //     管理日志记录器
 //
 template<class mutexT = mutex_t>
-class registry
+class basic_registry
 {
 public:
 #if defined(TINYLOG_WINDOWS_API)
@@ -2113,16 +2117,33 @@ public:
     using logger_ptr    = std::shared_ptr<logger_t>;
 
 public:
-    static registry &instance()
+    static basic_registry& instance()
     {
-        // TODO:
-        static registry instance_;
-        return instance_;
+        if (!inst_)
+        {
+            struct ms_enabler : public basic_registry {};
+
+            if (std::this_thread::get_id() == std::thread::id())
+            // on main
+            {
+                inst_ = std::make_shared<ms_enabler>();
+            }
+            else
+            {
+                std::call_once(once_flg_
+                    , [&]()
+                    {
+                        inst_ = std::make_shared<ms_enabler>();
+                    });
+            }
+        }
+        assert(inst_ && "registry instance must exists");
+        return *inst_;
     }
 
 public:
-    registry(registry const&) = delete;
-    registry& operator=(registry const&) = delete;
+    basic_registry(basic_registry const&) = delete;
+    basic_registry& operator=(basic_registry const&) = delete;
 
     // 日志级别:
     //     为创建日志记录器时设置默认过滤级别
@@ -2223,7 +2244,7 @@ public:
     }
 
 private:
-    registry() = default;
+    basic_registry() = default;
 
     static string_t cvt(string_t const& xs)
     {
@@ -2249,10 +2270,26 @@ private:
     }
 
 private:
+    static std::once_flag once_flg_;
+    static std::shared_ptr<basic_registry> inst_;
+
+private:
     mutable mutexT mtx_;
     level lvl_ = level::trace;
     std::unordered_map<string_t, logger_ptr> loggers_;
 };
+
+template <class mutexT>
+std::once_flag basic_registry<mutexT>::once_flg_;
+
+template <class mutexT>
+std::shared_ptr<basic_registry<mutexT>> basic_registry<mutexT>::inst_;
+
+#if defined(TINYLOG_NO_REGISTRY_MUTEX)
+using registry = basic_registry<detail::null_mutex>;
+#else
+using registry = basic_registry<std::mutex>;
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -2278,7 +2315,7 @@ public:
     }
 
     explicit basic_dlprintf_base(string_t const& logger_name)
-        : logger_(registry<mutex_t>::instance().get_logger(logger_name))
+        : logger_(registry::instance().get_logger(logger_name))
     {
     }
 
@@ -2460,7 +2497,7 @@ public:
 
     explicit basic_odlstream_base(string_t const& logger_name)
         : base(&stringbuf_)
-        , logger_(registry<mutex_t>::instance().get_logger(logger_name))
+        , logger_(registry::instance().get_logger(logger_name))
     {
     }
 
