@@ -47,6 +47,9 @@ SOFTWARE.
  *
  * using namespace tinylog;
  *
+ * // 注册一个日志记录器
+ * auto inst = registry::instance().create_logger();
+ *
  * // 安装输出槽：接收日志消息
  * //     - [w]console_sink
  * //           终端槽, 不同级别日志以不同颜色区分.
@@ -62,10 +65,10 @@ SOFTWARE.
  * //     - [w]msvc_sink
  * //           visual studio debug console output.
  * //
- * logger::add_sink<sink::wfile_sink<default_layout>>("d:\\default.log");
+ * inst->create_sink<sink::wfile_sink<default_layout>>("d:\\default.log");
  *
  * // 过滤日志级别
- * logger::set_level(info);
+ * inst->set_level(info);
  *
  * // [usage] 输出日志
  * //    - char
@@ -2049,9 +2052,8 @@ public:
     {
         using char_type = charT;
         assert(sk && "sink instance point must exists");
-        sk->set_level(lvl_);
-        auto sk_adapter = std::make_shared<detail::basic_sink_adapter<char_type>>(sk);
-        sink_adapters_.emplace_back(sk_adapter);
+        auto ska = std::make_shared<detail::basic_sink_adapter<char_type>>(sk);
+        sink_adapters_.emplace_back(ska);
         return sk;
     }
 
