@@ -154,6 +154,7 @@ SOFTWARE.
 
 // 使用单线程模式
 // #define TINYLOG_USE_SINGLE_THREAD 1
+// #define TINYLOG_NO_REGISTRY_MUTEX 1
 
 // 禁止STL容器日志
 // #define TINYLOG_DISABLE_STL_LOGING 1
@@ -164,7 +165,7 @@ SOFTWARE.
 // 使用简体中文
 // #define TINYLOG_USE_SIMPLIFIED_CHINA 1
 
-#if defined(TINYLOG_USE_SINGLE_THREAD)
+#if defined(TINYLOG_USE_SINGLE_THREAD) && !defined(TINYLOG_NO_REGISTRY_MUTEX)
 #   define TINYLOG_NO_REGISTRY_MUTEX 1
 #endif
 
@@ -245,7 +246,7 @@ SOFTWARE.
 #   define TINYLOG_FUNCTION __PRETTY_FUNCTION__
 #else
 #   define TINYLOG_FUNCTION __FUNCTION__
-#endif // __PRETTY_FUNCTION__
+#endif // __GNUC__
 
 #if defined(NDEBUG)
 
@@ -1980,7 +1981,7 @@ public:
 #else
     using char_type     = char;
     using extern_type   = wchar_t;
-#endif // defined
+#endif
     using string_t      = std::basic_string<char_type>;
     using xstring_t     = std::basic_string<extern_type>;
     using sink_adapter_t = std::shared_ptr<detail::sink_adapter_base>;
@@ -2110,7 +2111,7 @@ public:
 #else
     using char_type     = char;
     using extern_type   = wchar_t;
-#endif // defined
+#endif
     using string_t      = std::basic_string<char_type>;
     using xstring_t     = std::basic_string<extern_type>;
     using logger_t      = logger;

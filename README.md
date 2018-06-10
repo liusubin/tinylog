@@ -68,17 +68,20 @@ int main(int argc, char* argv[])
     std::locale loc("");
     std::locale::global(loc);
 
+    // Regist logger
+    auto inst = registry::instance().create_logger();
+
     // Setup sink: @see std::make_shared<>
-    logger::add_sink<sink::console_sink>();
+    inst->create_sink<sink::console_sink>();
 
     constexpr auto max_file_size = 5 * 1024 * 1024; // 5MB
-    logger::add_sink<sink::u8_file_sink>("default.log", max_file_size);
+    inst->create_sink<sink::u8_file_sink>("default.log", max_file_size);
 
     // Filter level
-    logger::set_level(debug);
+    inst->set_level(debug);
 
     // [option] Output title
-    lout_d << logger::title("TinyLog");
+    dlout(inst, debug) << logger::title("TinyLog");
 
     //--------------|
     // Logging      |
