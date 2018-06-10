@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     lout(info) << "Weclome to TinyLog !!!" << std::endl;
 
     // STL container
-    std::map<std::string, size_t> const ages = {{ "tinylog", 1 }, { "json", 5 }};
+    std::map<std::string, size_t> const ages = {{"tl", 1}, {"js", 5}};
     lout(warn) << "ages: " << ages << std::endl;
 
     // Hex string
