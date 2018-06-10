@@ -2238,7 +2238,7 @@ public:
 #endif
     }
 
-    void earse_all_logger()
+    void erase_all_logger()
     {
         std::lock_guard<mutexT> lock(mtx_);
         loggers_.clear();
